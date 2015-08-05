@@ -1,0 +1,11 @@
+extends layout
+
+block content
+  #dashboard
+
+block scripts
+  script.
+    app.renderDashboard({
+      el: '#dashboard',
+      endpoints: !{JSON.stringify(endpoints).replace(/<\//g, "<\\/")}, 
+    });
