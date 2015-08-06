@@ -79,15 +79,25 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-	var _chart = __webpack_require__(11);
+	var _chart = __webpack_require__(2);
 
 	var _chart2 = _interopRequireDefault(_chart);
 
 	exports['default'] = Backbone.View.extend({
-	  template: __webpack_require__(2),
+	  template: __webpack_require__(12),
+
+	  events: {
+	    'click [data-filter=day]': 'filter',
+	    'click [data-filter=week]': 'filter',
+	    'click [data-filter=month]': 'filter'
+	  },
 
 	  initialize: function initialize(options) {
 	    this.endpoints = options.endpoints;
+
+	    this.state = new Backbone.Model({
+	      filter: 'day'
+	    });
 	  },
 
 	  render: function render() {
@@ -106,11 +116,23 @@
 
 	  appendChart: function appendChart(endpoint) {
 	    var view = new _chart2['default']({
+	      state: this.state,
 	      endpoint: endpoint
 	    });
 
 	    view.render();
 	    this.$('#charts').append(view.$el);
+	  },
+
+	  filter: function filter(e) {
+	    var filter = e.target.dataset.filter;
+	    this.state.set('filter', filter);
+	    this.selectFilter(filter);
+	  },
+
+	  selectFilter: function selectFilter(filter) {
+	    this.$('.chart-filters a').removeClass('active');
+	    this.$('[data-filter=' + filter + ']').addClass('active');
 	  }
 	});
 	module.exports = exports['default'];
@@ -119,22 +141,132 @@
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Handlebars = __webpack_require__(3);
-	module.exports = (Handlebars["default"] || Handlebars).template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-	    return "<div id=\"charts\"></div>";
-	},"useData":true});
+	'use strict';
+
+	Object.defineProperty(exports, '__esModule', {
+	  value: true
+	});
+	exports['default'] = Backbone.View.extend({
+	  template: __webpack_require__(3),
+
+	  className: 'chart',
+
+	  initialize: function initialize(options) {
+	    this.endpoint = options.endpoint;
+	    this.state = options.state;
+	    this.listenTo(this.state, 'change:filter', this.filterChanged, this);
+	    this.startDate = moment().subtract(1, 'day').toDate();
+	  },
+
+	  filterChanged: function filterChanged(model, value) {
+	    this.startDate = moment().subtract(1, value).toDate();
+	    this.render();
+	  },
+
+	  render: function render() {
+	    var _this = this;
+
+	    this.filteredData = this.endpoint.data.filter(function (x) {
+	      var foo = Date.parse(x.date) > _this.startDate;
+	      console.log(foo);
+	      return foo;
+	    });
+
+	    console.log(this.filteredData);
+
+	    this.endpoint.avg = this.avg(this.filteredData);
+	    this.$el.html(this.template(this.endpoint));
+
+	    _.defer(function () {
+	      _this.renderChart();
+	    });
+	  },
+
+	  avg: function avg(data) {
+	    var total = _.chain(data).pluck('ms').reduce(function (a, b) {
+	      return a + b;
+	    }).value();
+
+	    if (total === undefined) {
+	      total = 0;
+	    }
+	    var avg = total / (data.length === 0 ? 1 : data.length);
+	    return Number(avg.toFixed(2));
+	  },
+
+	  renderChart: function renderChart() {
+	    var data = this.filteredData.map(function (x) {
+	      return [Date.parse(x.date), x.ms];
+	    });
+
+	    this.$('[data-js=chart]').highcharts({
+	      title: false,
+	      plotOptions: {
+	        line: {
+	          animation: false,
+	          marker: {
+	            enabled: false
+	          }
+	        }
+	      },
+	      xAxis: {
+	        type: 'datetime',
+	        labels: {
+	          style: {
+	            fontSize: '10px;'
+	          }
+	        }
+	      },
+	      yAxis: {
+	        title: {
+	          enabled: false
+	        },
+	        labels: {
+	          style: {
+	            fontSize: '10px;'
+	          }
+	        }
+	      },
+	      series: [{
+	        enableMouseTracking: false,
+	        showInLegend: false,
+	        data: data
+	      }],
+	      tooltip: {
+	        enabled: false
+	      },
+	      credits: false
+	    });
+	  }
+	});
+	module.exports = exports['default'];
 
 /***/ },
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	// Create a simple path alias to allow browserify to resolve
-	// the runtime on a supported path.
-	module.exports = __webpack_require__(4)['default'];
+	var Handlebars = __webpack_require__(4);
+	module.exports = (Handlebars["default"] || Handlebars).template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+	    var helper, alias1=helpers.helperMissing, alias2="function", alias3=this.escapeExpression;
 
+	  return "<div class=\"chart-name\">"
+	    + alias3(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"name","hash":{},"data":data}) : helper)))
+	    + "</div>\r\n<div class=\"chart-avg\">\r\n    "
+	    + alias3(((helper = (helper = helpers.avg || (depth0 != null ? depth0.avg : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"avg","hash":{},"data":data}) : helper)))
+	    + " ms\r\n</div>\r\n<div data-js=\"chart\" style=\"height: 140px;\"></div>\r\n";
+	},"useData":true});
 
 /***/ },
 /* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Create a simple path alias to allow browserify to resolve
+	// the runtime on a supported path.
+	module.exports = __webpack_require__(5)['default'];
+
+
+/***/ },
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -143,30 +275,30 @@
 
 	exports.__esModule = true;
 
-	var _import = __webpack_require__(6);
+	var _import = __webpack_require__(7);
 
 	var base = _interopRequireWildcard(_import);
 
 	// Each of these augment the Handlebars object. No need to setup here.
 	// (This is done to easily share code between commonjs and browse envs)
 
-	var _SafeString = __webpack_require__(8);
+	var _SafeString = __webpack_require__(9);
 
 	var _SafeString2 = _interopRequireWildcard(_SafeString);
 
-	var _Exception = __webpack_require__(7);
+	var _Exception = __webpack_require__(8);
 
 	var _Exception2 = _interopRequireWildcard(_Exception);
 
-	var _import2 = __webpack_require__(5);
+	var _import2 = __webpack_require__(6);
 
 	var Utils = _interopRequireWildcard(_import2);
 
-	var _import3 = __webpack_require__(9);
+	var _import3 = __webpack_require__(10);
 
 	var runtime = _interopRequireWildcard(_import3);
 
-	var _noConflict = __webpack_require__(10);
+	var _noConflict = __webpack_require__(11);
 
 	var _noConflict2 = _interopRequireWildcard(_noConflict);
 
@@ -199,7 +331,7 @@
 	module.exports = exports['default'];
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -318,7 +450,7 @@
 	}
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -329,11 +461,11 @@
 	exports.HandlebarsEnvironment = HandlebarsEnvironment;
 	exports.createFrame = createFrame;
 
-	var _import = __webpack_require__(5);
+	var _import = __webpack_require__(6);
 
 	var Utils = _interopRequireWildcard(_import);
 
-	var _Exception = __webpack_require__(7);
+	var _Exception = __webpack_require__(8);
 
 	var _Exception2 = _interopRequireWildcard(_Exception);
 
@@ -596,7 +728,7 @@
 	/* [args, ]options */
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -639,7 +771,7 @@
 	module.exports = exports['default'];
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -658,7 +790,7 @@
 	module.exports = exports['default'];
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -676,15 +808,15 @@
 	exports.invokePartial = invokePartial;
 	exports.noop = noop;
 
-	var _import = __webpack_require__(5);
+	var _import = __webpack_require__(6);
 
 	var Utils = _interopRequireWildcard(_import);
 
-	var _Exception = __webpack_require__(7);
+	var _Exception = __webpack_require__(8);
 
 	var _Exception2 = _interopRequireWildcard(_Exception);
 
-	var _COMPILER_REVISION$REVISION_CHANGES$createFrame = __webpack_require__(6);
+	var _COMPILER_REVISION$REVISION_CHANGES$createFrame = __webpack_require__(7);
 
 	function checkRevision(compilerInfo) {
 	  var compilerRevision = compilerInfo && compilerInfo[0] || 1,
@@ -895,7 +1027,7 @@
 	}
 
 /***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {'use strict';
@@ -919,74 +1051,12 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-	exports['default'] = Backbone.View.extend({
-	  template: __webpack_require__(12),
-
-	  initialize: function initialize(options) {
-	    this.endpoint = options.endpoint;
-	  },
-
-	  render: function render() {
-	    this.$el.html(this.template(this.endpoint));
-	    this.renderChart();
-	  },
-
-	  renderChart: function renderChart() {
-	    var data = this.endpoint.data.map(function (x) {
-	      return [Date.parse(x.date), x.ms];
-	    });
-
-	    this.$('[data-js=chart]').highcharts({
-	      title: false,
-	      plotOptions: {
-	        line: {
-	          animation: false,
-	          marker: {
-	            enabled: false
-	          }
-	        }
-	      },
-	      xAxis: {
-	        type: 'datetime'
-	      },
-	      yAxis: {
-	        title: {
-	          enabled: false
-	        }
-	      },
-	      series: [{
-	        enableMouseTracking: false,
-	        showInLegend: false,
-	        data: data
-	      }],
-	      tooltip: {
-	        enabled: false
-	      },
-	      credits: false
-	    });
-	  }
-	});
-	module.exports = exports['default'];
-
-/***/ },
 /* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Handlebars = __webpack_require__(3);
+	var Handlebars = __webpack_require__(4);
 	module.exports = (Handlebars["default"] || Handlebars).template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-	    var helper;
-
-	  return "<h3>"
-	    + this.escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(depth0,{"name":"name","hash":{},"data":data}) : helper)))
-	    + "</h3>\r\n<div data-js=\"chart\" style=\"width: 900px; height: 140px; margin: 0 auto\"></div>\r\n";
+	    return "<div class=\"chart-filters\">\r\n    <a data-filter=\"day\" class=\"active\">Day</a>\r\n    <a data-filter=\"week\">Week</a>\r\n    <a data-filter=\"month\">Month</a>    \r\n</div>\r\n\r\n<div id=\"charts\"></div>\r\n";
 	},"useData":true});
 
 /***/ }

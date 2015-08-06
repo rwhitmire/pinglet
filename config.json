@@ -1,7 +1,6 @@
 {
   "connection_string": "mongodb://localhost/pinglet",
   "interval": 600000,
-
   "endpoints": [
     {"name": "google", "url": "http://google.com"},
     {"name": "yahoo", "url": "http://yahoo.com"},

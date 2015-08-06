@@ -1,8 +1,79 @@
+@import url(https://fonts.googleapis.com/css?family=Shadows+Into+Light);
+
 body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  font-family: "Lucida Grande", Helvetica, Arial, sans-serif;
+  padding: 0;
+  margin: 0;
 }
 
-a {
-  color: #00B7FF;
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 50px;
+}
+
+.container .brand {
+    font-size: 150%;
+    font-weight: bold;
+    font-family: 'Shadows Into Light', cursive;
+    letter-spacing: 2px;
+}
+
+.chart {
+    border: 1px solid #D6D6D6;
+    padding: 24px;
+    padding-bottom: 48px;
+    margin-bottom: 30px;
+}
+
+.chart-name {
+    margin-bottom: 20px;
+    font-weight: bold;
+    float: left;
+}
+
+.chart-avg {
+    float: right;
+    color: #808080;
+    font-size: 90%;
+}
+
+header {
+    background: #2e9fff;
+    margin-bottom: 30px;
+    padding: 10px 0;
+    color: white;
+}
+
+#content {
+    min-height: 600px;
+}
+
+.chart-filters {
+    text-align: right;
+    margin-bottom: 20px;
+    color: #828282;
+}
+
+.chart-filters a {
+    display: inline-block;
+    cursor: pointer;
+    padding: 0px 16px;
+    border-left: 1px solid #D6D6D6;
+}
+
+.chart-filters a:hover {
+    color: #2e9fff;
+}
+
+.chart-filters a:first-child {
+    border-left: none;
+}
+
+.chart-filters a:last-child {
+    padding-right: 0;
+}
+
+.chart-filters a.active {
+    color: #000;
 }

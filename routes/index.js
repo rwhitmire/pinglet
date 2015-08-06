@@ -2,15 +2,22 @@ var express = require('express');
 var router = express.Router();
 var config = require('./../config.json');
 var mongoose = require('mongoose');
-
+var moment = require('moment');
+var _ = require('underscore');
 var Request = mongoose.model('Request');
 
-/* GET home page. */
 router.get('/', function(req, res, next) {
   var promises = [];
 
   config.endpoints.forEach(endpoint => {
-    var promise = Request.find({url: endpoint.url}).select('date ms -_id').exec();
+    var startDate = moment().subtract(1, 'month').toDate();
+    
+    var promise = Request
+      .find({url: endpoint.url, date: {$gt: startDate}})
+      .select('date ms -_id')
+      .sort('date')
+      .exec();
+
     promises.push(promise);
   });
 
@@ -30,6 +37,10 @@ router.get('/', function(req, res, next) {
     };
 
     res.render('index', context);
+  });
+
+  promise.catch(err => {
+    next(err);
   });
 });
 
